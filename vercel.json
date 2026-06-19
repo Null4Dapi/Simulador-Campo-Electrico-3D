@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "projects": [
+    {
+      "name": "campoelectrico-frontend",
+      "root": "apps/frontend"
+    },
+    {
+      "name": "campoelectrico-api",
+      "root": "apps/api"
+    },
+    {
+      "name": "campoelectrico-backend",
+      "root": "apps/backend"
+    }
+  ]
+}

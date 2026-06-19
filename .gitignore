@@ -1,0 +1,139 @@
+# ============================================
+# Dependencias
+# ============================================
+node_modules/
+.pnp/
+.pnp.js
+.yarn/
+.yarnrc.yml
+.yarnrc
+
+# ============================================
+# Build y Salida
+# ============================================
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.astro/
+*.local
+*.cache
+coverage/
+*.lcov
+
+# ============================================
+# Variables de entorno y secretos
+# ============================================
+.env
+.env.*
+!.env.example
+
+# ============================================
+# Logs
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+test-results/
+
+# ============================================
+# Cache de herramientas
+# ============================================
+.vite/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.cache/
+
+# ============================================
+# Editores e IDEs
+# ============================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.vscode-test/
+*.code-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ============================================
+# Archivos temporales y de sistema
+# ============================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*~
+*.bak
+*.orig
+*.swp
+*.swo
+
+# ============================================
+# Pruebas, experimentos y archivos de desarrollo
+# ============================================
+scratch/
+tests/
+test/
+__tests__/
+**/__tests__/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+test-results/
+coverage/
+playground/
+tmp/
+
+# ============================================
+# Agentes IA / herramientas de asistencia
+# ============================================
+.agents/
+.gemini/
+.copilot/
+.claude/
+.aider*
+.cursor/
+review/
+documentation/
+powershell.cmd
+skills-lock.json
+
+# ============================================
+# Ajustes extra de privacidad/limpieza
+# ============================================
+local.env
+*.key
+*.pem
+*.csr
+*.crt
+*.p12
+*.jks
+*.snk
+
+.vercel
+.env*
+
+# ============================================
+# Supabase
+# ============================================
+supabase/.branches
+supabase/.temp
+
+# ============================================
+# Documentación local
+# ============================================
+docs/
