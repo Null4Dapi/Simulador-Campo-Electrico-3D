@@ -137,3 +137,5 @@ supabase/.temp
 # Documentación local
 # ============================================
 docs/
+
+.turbo
