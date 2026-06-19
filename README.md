@@ -20,6 +20,17 @@
 
 ---
 
+<details>
+<summary>📸 Vista Previa del Simulador</summary>
+
+<br>
+
+![Campo Eléctrico 3D – Vista previa del simulador mostrando un dipolo con líneas de campo y el asistente IA](./.github/screenshots/preview.png)
+
+</details>
+
+---
+
 ## ¿Por qué existe este proyecto?
 
 Aprender electromagnetismo es un desafío. Tradicionalmente, conceptos como el _potencial eléctrico_, la _fuerza de Coulomb_ o las _líneas de campo_ se enseñan en pizarras planas en 2D, dejando a los estudiantes luchando por visualizar fenómenos que son fundamentalmente tridimensionales e invisibles.
