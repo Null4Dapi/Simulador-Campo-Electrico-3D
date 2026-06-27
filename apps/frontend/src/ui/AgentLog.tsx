@@ -24,7 +24,6 @@ export const AgentLog = memo(function AgentLog() {
   const sessionId = useSimulatorStore((state) => state.sessionId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Inicializa la carga de datos de la sesión y establece escuchadores de eventos al montar el componente
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -39,7 +38,6 @@ export const AgentLog = memo(function AgentLog() {
 
     void fetchMessages();
 
-    // Suscribe el componente a la emisión de nuevos mensajes en el chat
     const handleChatUpdated = () => {
       void fetchMessages();
     };
@@ -50,7 +48,6 @@ export const AgentLog = memo(function AgentLog() {
     };
   }, [sessionId]);
 
-  // Controla el desplazamiento automático de la vista hacia los mensajes recientes
   useEffect(() => {
     if (isChatOpen && scrollRef.current) {
       setTimeout(() => {
@@ -64,7 +61,6 @@ export const AgentLog = memo(function AgentLog() {
 
   const clearChatSession = useSimulatorStore((state) => state.clearChatSession);
 
-  // Ejecuta la purga del historial tanto en el almacenamiento local como en la base de datos remota
   const handleClearHistory = () => {
     clearChatSession();
     setMessages([]);
@@ -96,7 +92,6 @@ export const AgentLog = memo(function AgentLog() {
       style={{ originX: 1, originY: 1 }}
       className="absolute bottom-4 right-4 md:bottom-6 md:right-6 glass-panel-floating pointer-events-auto flex flex-col w-[300px] sm:w-[340px] h-[360px] sm:h-[420px] overflow-hidden z-30 shadow-2xl"
     >
-      {/* Encabezado visual de la interfaz del asistente */}
       <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between bg-black/5 dark:bg-white/5 backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <Sparkles className="w-4 h-4 text-primary" />
@@ -123,13 +118,11 @@ export const AgentLog = memo(function AgentLog() {
         </div>
       </div>
 
-      {/* Contenedor desplazable para el historial de mensajes */}
       <div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col custom-scrollbar"
       >
         {isLoading ? (
-          // Indicador de estado de carga mediante elementos esqueleto
           <div className="flex flex-col gap-4 animate-pulse">
             <div className="self-end w-3/4 h-10 bg-primary/20 rounded-2xl rounded-br-sm" />
             <div className="self-start w-2/3 h-16 bg-muted/50 rounded-2xl rounded-bl-sm" />

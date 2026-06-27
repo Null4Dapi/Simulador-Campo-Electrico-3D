@@ -6,10 +6,12 @@ import { RightToolbar } from './ui/RightToolbar'
 import { RightInspector } from './ui/RightInspector'
 import { BottomChatInput } from './ui/BottomChatInput'
 import { AgentLog } from './ui/AgentLog'
-import { OnboardingModal } from './ui/OnboardingModal'
 import { ZoomControls } from './ui/ZoomControls'
 import { QuizButton } from './ui/QuizButton'
-import { QuizPanel } from './ui/QuizPanel'
+import { Suspense, lazy } from 'react'
+
+const QuizPanel = lazy(() => import('./ui/QuizPanel').then(m => ({ default: m.QuizPanel })))
+const OnboardingModal = lazy(() => import('./ui/OnboardingModal').then(m => ({ default: m.OnboardingModal })))
 import { useSimulatorStore } from '@campoelectrico/store'
 
 function App() {
@@ -27,54 +29,54 @@ function App() {
   const cursorClass = interactionMode === 'pan' ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
 
   return (
-    <div className={`relative w-screen h-screen bg-slate-50 dark:bg-black overflow-hidden font-serif select-none text-zinc-900 dark:text-white ${cursorClass}`}>
-      {/* Capa base de renderizado tridimensional */}
+    <main className={`relative w-screen h-screen bg-slate-50 dark:bg-black overflow-hidden font-serif select-none text-zinc-900 dark:text-white ${cursorClass}`}>
       <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 5, 10], fov: 50 }} gl={{ preserveDrawingBuffer: true }}>
+        <Canvas 
+          camera={{ position: [0, 5, 10], fov: 50 }} 
+          gl={{ preserveDrawingBuffer: true, powerPreference: 'high-performance', antialias: true, alpha: false }}
+          dpr={[1, 2]}
+          role="img"
+          aria-label="Simulación 3D interactiva del campo eléctrico"
+        >
           <Scene />
         </Canvas>
       </div>
 
-      {/* Capa de interfaz superpuesta con transferencia de eventos al lienzo subyacente */}
       <div className="layer-ui-wrapper absolute inset-0 pointer-events-none overflow-hidden">
         
-        {/* Controles de navegación y marca (Esquina superior izquierda) */}
-        <div className="absolute top-4 left-4 sm:top-6 sm:left-6 pointer-events-auto z-10">
+        <header className="absolute top-4 left-4 sm:top-6 sm:left-6 pointer-events-none z-10 max-w-[calc(100vw-2rem)]">
           <HeaderNavbar />
-        </div>
+        </header>
 
-        {/* Barra de herramientas principal (Centro superior) */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 sm:top-6 pointer-events-auto z-10 flex justify-center">
+        <nav className="absolute top-16 left-1/2 -translate-x-1/2 sm:top-6 pointer-events-none z-10 flex justify-center w-[calc(100vw-2rem)] sm:w-auto">
           <RightToolbar />
-        </div>
+        </nav>
 
-        {/* Panel de inspección y propiedades (Lateral izquierdo) */}
-        <div className="absolute top-20 left-4 sm:top-24 sm:left-6 bottom-20 sm:bottom-24 pointer-events-auto z-10 flex flex-col items-start justify-start">
+        <aside className="absolute bottom-0 left-0 right-0 sm:top-24 sm:left-6 sm:bottom-24 sm:right-auto pointer-events-none z-10 flex flex-col items-center sm:items-start justify-end sm:justify-start overflow-hidden sm:max-w-[calc(100vw-2rem)]">
           <RightInspector />
-        </div>
+        </aside>
 
-        {/* Controles de nivel de detalle (Esquina inferior izquierda) */}
-        <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 pointer-events-auto z-10">
+        <div className="absolute top-1/2 -translate-y-1/2 left-4 sm:top-auto sm:translate-y-0 sm:bottom-6 sm:left-6 pointer-events-none z-10">
           <ZoomControls />
         </div>
 
-        {/* Interfaz de entrada para comandos y chat (Centro inferior) */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:bottom-6 pointer-events-auto z-10 w-full max-w-xl flex justify-center px-4">
+        <div className="absolute bottom-[50vh] sm:bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 w-full max-w-xl flex justify-center px-4">
           <BottomChatInput />
         </div>
 
-        {/* Panel de registro del asistente virtual (Gestión autónoma de posicionamiento) */}
         <AgentLog />
         
-        {/* Componentes del Quizz Metacognitivo */}
         <QuizButton />
-        <QuizPanel />
+        <Suspense fallback={null}>
+          <QuizPanel />
+        </Suspense>
         
       </div>
 
-      {/* Capas modales superpuestas */}
-      <OnboardingModal />
-    </div>
+      <Suspense fallback={null}>
+        <OnboardingModal />
+      </Suspense>
+    </main>
   )
 }
 

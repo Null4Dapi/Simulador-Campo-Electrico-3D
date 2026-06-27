@@ -8,7 +8,6 @@ export function QuizPanel() {
   const isQuizOpen = useSimulatorStore((state) => state.isQuizOpen);
   const setQuizOpen = useSimulatorStore((state) => state.setQuizOpen);
 
-  // Intentar recuperar el progreso desde localStorage
   const getInitialProgress = () => {
     try {
       const saved = localStorage.getItem('campo_electrico_quiz_progress');
@@ -42,7 +41,7 @@ export function QuizPanel() {
   }, [currentQuestionIndex, score, isFinished]);
 
   const handleSelectOption = (index: number) => {
-    if (isAnswered) return; // No permitir cambiar después de responder
+    if (isAnswered) return;
     setSelectedOption(index);
   };
 
@@ -84,7 +83,6 @@ export function QuizPanel() {
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           className="absolute top-4 right-4 sm:top-6 sm:right-6 bottom-4 sm:bottom-6 w-full max-w-[360px] pointer-events-auto z-50 flex flex-col glass-panel-floating shadow-2xl overflow-hidden rounded-xl border border-border"
         >
-          {/* Cabecera */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-background/50 backdrop-blur-sm shrink-0">
             <div>
               <h2 className="font-serif font-bold text-lg text-foreground tracking-wide">Quizz de Reflexión</h2>
@@ -103,7 +101,6 @@ export function QuizPanel() {
             </button>
           </div>
 
-          {/* Contenido scrolleable */}
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col">
             {isFinished ? (
               <motion.div 
@@ -169,12 +166,10 @@ export function QuizPanel() {
               </motion.div>
             ) : (
               <>
-                {/* Pregunta */}
                 <h3 className="text-[15px] leading-relaxed font-medium mb-6 text-foreground">
                   {question.question}
                 </h3>
 
-                {/* Alternativas */}
                 <div className="space-y-2.5 mb-8">
                   {question.options.map((opt, idx) => {
                     const isSelected = selectedOption === idx;
@@ -212,7 +207,6 @@ export function QuizPanel() {
                   })}
                 </div>
 
-                {/* Feedback */}
                 <AnimatePresence mode="wait">
                   {isAnswered && (
                     <motion.div
@@ -252,7 +246,6 @@ export function QuizPanel() {
             )}
           </div>
 
-          {/* Pie / Botones de acción */}
           {!isFinished && (
             <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm shrink-0">
               {!isAnswered ? (

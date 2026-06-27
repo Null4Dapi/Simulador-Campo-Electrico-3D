@@ -23,7 +23,6 @@ export function HeaderNavbar() {
   const handleToggleTheme = (e: React.MouseEvent) => {
     if (isTransitioning.current) return;
 
-    // Determina las coordenadas exactas del evento de interacción
     const x = e.clientX;
     const y = e.clientY;
 
@@ -74,11 +73,10 @@ export function HeaderNavbar() {
   return (
     <header className="flex items-center gap-4 select-none">
       
-      {/* Elemento disparador del menú con estilo de panel translúcido */}
       <div className="pointer-events-auto glass-panel-floating flex items-center justify-center p-1.5">
         <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center justify-center w-8 h-8 rounded-[calc(var(--radius)-4px)] text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-all duration-200 active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <Menu className="w-5 h-5" />
+        <DropdownMenuTrigger aria-label="Abrir menú principal" className="flex items-center justify-center w-8 h-8 rounded-[calc(var(--radius)-4px)] text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-all duration-200 active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <Menu className="w-5 h-5" aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={16} alignOffset={-6} className="w-56">
           <DropdownMenuItem onClick={toggleTapeMeasure} className="cursor-pointer">
@@ -107,13 +105,12 @@ export function HeaderNavbar() {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={resetOnboarding} className="cursor-pointer">
             <HelpCircle className="w-4 h-4 mr-2" />
-            <span>Help & Issues</span>
+            <span>Ayuda y Problemas</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       </div>
 
-      {/* Componente tipográfico principal superpuesto en la interfaz */}
       <div className="pointer-events-auto flex flex-col drop-shadow-md">
         <h1 className="text-sm font-bold tracking-widest text-foreground uppercase font-serif">
           Campo Eléctrico 3D

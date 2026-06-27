@@ -33,7 +33,7 @@
 
 ## ¿Por qué existe este proyecto?
 
-Aprender electromagnetismo es un desafío. Tradicionalmente, conceptos como el _potencial eléctrico_, la _fuerza de Coulomb_ o las _líneas de campo_ se enseñan en pizarras planas en 2D, dejando a los estudiantes luchando por visualizar fenómenos que son fundamentalmente tridimensionales e invisibles.
+Aprender electroestática es un desafío. Tradicionalmente, conceptos como el _potencial eléctrico_, la _fuerza de Coulomb_ o las _líneas de campo_ se enseñan en pizarras planas en 2D, dejando a los estudiantes luchando por visualizar fenómenos que son fundamentalmente tridimensionales e invisibles.
 
 **Campo Eléctrico 3D** nació para solucionar este vacío pedagógico. Nuestra misión es ofrecer a estudiantes e instituciones educativas una herramienta innovadora que haga la física **visual, interactiva y completamente inmersiva**. Olvídate de los simuladores arcaicos y limitados; aquí podrás interactuar con la física en tiempo real, respaldado por un asistente de Inteligencia Artificial que guía tu aprendizaje paso a paso.
 
@@ -103,13 +103,11 @@ Este ecosistema ha sido construido siguiendo los más altos estándares de la in
    git clone https://github.com/tu-usuario/campo-electrico-3d.git
    cd campo-electrico-3d
    ```
-
 2. Instala las dependencias globales del monorepo:
 
    ```bash
    pnpm install
    ```
-
 3. **Variables de Entorno:** Revisa los archivos `.env.example` en `apps/frontend` y `apps/api`. Crea un archivo `.env.local` en cada uno y configura tus claves (Ej. Supabase, Ollama).
 4. Levanta el entorno de desarrollo:
 

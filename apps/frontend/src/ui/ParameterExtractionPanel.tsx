@@ -66,25 +66,16 @@ export function ParameterExtractionPanel({ jsonString, isLatest }: Props) {
     const variableMeta = AVAILABLE_VARIABLES.find(v => v.value === selectedValue);
     if (!variableMeta) return;
 
-    /**
-     * Lógica de auto-numeración para variables homónimas.
-     * Analiza el arreglo de parámetros para identificar variables preexistentes con la misma raíz léxica.
-     * En caso de encontrar duplicidad, anexa secuencialmente el índice numérico siguiente (ej. q -> q2).
-     */
     const sameVars = params.filter((p, i) => i !== index && !p.isDraft && p.name.startsWith(selectedValue));
     
     let finalName = selectedValue;
     if (sameVars.length > 0) {
-      /**
-       * Determina el índice máximo actual analizando el sufijo numérico de las variables,
-       * garantizando unicidad incluso si ocurren deleciones previas.
-       */
       let maxNum = 0;
       sameVars.forEach(p => {
         const numPart = p.name.replace(selectedValue, '');
         const num = parseInt(numPart);
         if (!isNaN(num) && num > maxNum) maxNum = num;
-        else if (numPart === '' && maxNum === 0) maxNum = 1; // Base implícita 1
+        else if (numPart === '' && maxNum === 0) maxNum = 1;
       });
       finalName = `${selectedValue}${maxNum + 1}`;
     }
@@ -102,10 +93,6 @@ export function ParameterExtractionPanel({ jsonString, isLatest }: Props) {
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      /**
-       * Purga parámetros inconclusos o vacíos (isDraft) antes de serializar
-       * el objeto final para el motor de orquestación.
-       */
       const finalParams = params.filter(p => !p.isDraft && p.name);
       const confirmedJson = JSON.stringify({ params: finalParams });
       const messageText = `<parameter_confirmed>${confirmedJson}</parameter_confirmed>`;

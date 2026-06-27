@@ -30,11 +30,6 @@ export const useSimulatorStore = create<SimulatorState>((set) => ({
   toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
   setTheme: (theme) => set({ theme }),
 
-  /**
-   * Instancia una nueva carga electromagnética en la escena.
-   * Genera coordenadas pseudoaleatorias garantizando una separación mínima
-   * respecto a las cargas preexistentes mediante comprobación espacial (volumétrica).
-   */
   addCharge: (type: ChargeType) => set((state) => {
     const newId = crypto.randomUUID();
     
@@ -70,11 +65,6 @@ export const useSimulatorStore = create<SimulatorState>((set) => ({
     };
   }),
 
-  /**
-   * Inyecta una carga en coordenadas tridimensionales explícitas.
-   * Garantiza que la magnitud sea absoluta para cargas estáticas (source) y 
-   * preserva la polaridad matemática paramétrica si es carga de prueba.
-   */
   addChargeAt: (type: ChargeType, position: [number, number, number], value: number) => set((state) => {
     const newId = crypto.randomUUID();
     const finalValue = type === 'test' ? value : Math.abs(value);
@@ -94,9 +84,6 @@ export const useSimulatorStore = create<SimulatorState>((set) => ({
     selectedChargeId: state.selectedChargeId === id ? null : state.selectedChargeId
   })),
 
-  /**
-   * Actualiza inmutablemente las propiedades (posición, magnitud, polaridad) de una carga específica.
-   */
   updateCharge: (id, updates) => set((state) => ({
     charges: state.charges.map((c) => {
       if (c.id === id) {
@@ -109,9 +96,6 @@ export const useSimulatorStore = create<SimulatorState>((set) => ({
     })
   })),
 
-  /**
-   * Restablece el contexto de simulación, purgando todas las entidades de la malla tridimensional.
-   */
   clearScene: () => set({ charges: [], selectedChargeId: null, isInspectorMinimized: false }),
   toggleFieldLines: () => set((state) => ({ showFieldLines: !state.showFieldLines })),
   toggleEquipotential: () => set((state) => ({ showEquipotential: !state.showEquipotential })),
@@ -154,7 +138,6 @@ export const useSimulatorStore = create<SimulatorState>((set) => ({
   setInteractionMode: (mode) => set({ interactionMode: mode }),
 }));
 
-// Expone el objeto de estado en el entorno global para facilitar instrumentación y pruebas automatizadas
 if ((import.meta as any).env?.DEV) {
   (window as any).useSimulatorStore = useSimulatorStore;
 }

@@ -91,19 +91,23 @@ export const FieldArrows = memo(function FieldArrows() {
     const lineColors: number[] = [];
     let arrowIndex = 0;
 
-    const positiveCharges = chargesData.filter(c => c.type === 'positive');
-    const negativeCharges = chargesData.filter(c => c.type === 'negative');
-    
-    // Según la teoría electrostática, las líneas nacen en cargas positivas y mueren en negativas.
-    // Si solo hay cargas negativas, se trazan desde el infinito hacia ellas (trazado inverso).
-    const seedingCharges = positiveCharges.length > 0 ? positiveCharges : negativeCharges;
-
-    seedingCharges.forEach(sourceCharge => {
+    // Para obtener una representación fiel sin superposición de líneas, y con una densidad
+    // de líneas proporcional a la magnitud de la carga:
+    // 1. Trazamos desde TODAS las cargas.
+    // 2. Desde positivas, trazamos hacia adelante.
+    // 3. Desde negativas, trazamos hacia atrás.
+    // 4. Si una línea trazada hacia atrás (desde una negativa) choca con una positiva,
+    //    la DESCARTAMOS para evitar superposición (porque la positiva ya dibujará esa conexión).
+    chargesData.forEach(sourceCharge => {
       const isPos = sourceCharge.type === 'positive';
+      const sign = isPos ? 1 : -1;
+      
+      // La cantidad de líneas es proporcional al valor absoluto de la carga, con un mínimo para visibilidad
+      const numLines = Math.min(100, Math.max(8, Math.round(NUM_LINES_PER_CHARGE * Math.abs(sourceCharge.value))));
       const phi = Math.PI * (3 - Math.sqrt(5));
 
-      for (let i = 0; i < NUM_LINES_PER_CHARGE; i++) {
-        const y = 1 - (i / (NUM_LINES_PER_CHARGE - 1)) * 2;
+      for (let i = 0; i < numLines; i++) {
+        const y = 1 - (i / (numLines - 1)) * 2;
         const radius = Math.sqrt(1 - y * y);
         const theta = phi * i;
 
@@ -122,31 +126,52 @@ export const FieldArrows = memo(function FieldArrows() {
         const tempColors: number[] = [];
         const tempArrows: { pos: [number, number, number], dir: [number, number, number], V: number }[] = [];
         
-        const getDir = (px: number, py: number, pz: number) => {
-          return calculateElectricField([px, py, pz], chargesData).direction;
-        };
+        let discardLine = false;
         
-        for (let step = 0; step < STEPS; step++) {
-          const { direction: dir1, magnitude } = calculateElectricField(
+        // Ajustamos la precisión del trazado para evitar colapso de líneas (Runge-Kutta 4)
+        const localSteps = 400;
+        const localStepSize = 0.15;
+
+        for (let step = 0; step < localSteps; step++) {
+          const { direction: dir1, magnitude: mag1 } = calculateElectricField(
             [currentX, currentY, currentZ], 
             chargesData
           );
           
-          if (magnitude < 1e-5) break;
+          if (mag1 < 1e-5) break; // Cerca de puntos de estancamiento el campo es nulo
           
-          const sign = isPos ? 1 : -1;
-          const h = sign * STEP_SIZE;
+          const h = sign * localStepSize;
           
-          // Integrador RK2 (Punto Medio) - Mucho más rápido que RK4 y suficientemente preciso para las curvas
+          // Integrador RK4 (Runge-Kutta 4) - Mayor estabilidad para líneas curvas, evita colapsos y cruces
           const k1x = dir1[0];
           const k1y = dir1[1];
           const k1z = dir1[2];
           
-          const d2 = getDir(currentX + 0.5 * h * k1x, currentY + 0.5 * h * k1y, currentZ + 0.5 * h * k1z);
+          const { direction: k2dir, magnitude: mag2 } = calculateElectricField(
+            [currentX + 0.5 * h * k1x, currentY + 0.5 * h * k1y, currentZ + 0.5 * h * k1z],
+            chargesData
+          );
+          if (mag2 < 1e-5) break;
+
+          const { direction: k3dir, magnitude: mag3 } = calculateElectricField(
+            [currentX + 0.5 * h * k2dir[0], currentY + 0.5 * h * k2dir[1], currentZ + 0.5 * h * k2dir[2]],
+            chargesData
+          );
+          if (mag3 < 1e-5) break;
+
+          const { direction: k4dir, magnitude: mag4 } = calculateElectricField(
+            [currentX + h * k3dir[0], currentY + h * k3dir[1], currentZ + h * k3dir[2]],
+            chargesData
+          );
+          if (mag4 < 1e-5) break;
           
-          const nextX = currentX + h * d2[0];
-          const nextY = currentY + h * d2[1];
-          const nextZ = currentZ + h * d2[2];
+          const dX = (h / 6) * (k1x + 2 * k2dir[0] + 2 * k3dir[0] + k4dir[0]);
+          const dY = (h / 6) * (k1y + 2 * k2dir[1] + 2 * k3dir[1] + k4dir[1]);
+          const dZ = (h / 6) * (k1z + 2 * k2dir[2] + 2 * k3dir[2] + k4dir[2]);
+          
+          const nextX = currentX + dX;
+          const nextY = currentY + dY;
+          const nextZ = currentZ + dZ;
           
           tempPositions.push(currentX, currentY, currentZ);
           tempPositions.push(nextX, nextY, nextZ);
@@ -161,13 +186,13 @@ export const FieldArrows = memo(function FieldArrows() {
           
           tempColorGrad.lerpColors(negativeColor, positiveColor, s);
           
-          const E_norm = Math.tanh(magnitude / 6.0);
+          const E_norm = Math.tanh(mag1 / 6.0);
           tempColorFinal.lerpColors(neutralColor, tempColorGrad, E_norm);
           
           tempColors.push(tempColorFinal.r, tempColorFinal.g, tempColorFinal.b);
           tempColors.push(tempColorFinal.r, tempColorFinal.g, tempColorFinal.b);
           
-          if (step % 40 === 20) {
+          if (step % 20 === 10) {
             tempArrows.push({
               pos: [nextX, nextY, nextZ],
               dir: dir1,
@@ -176,6 +201,7 @@ export const FieldArrows = memo(function FieldArrows() {
           }
 
           let hit = false;
+          let hitPositive = false;
           for (let cIdx = 0; cIdx < chargesData.length; cIdx++) {
             const c = chargesData[cIdx];
             if (c.id === sourceCharge.id) continue;
@@ -185,9 +211,11 @@ export const FieldArrows = memo(function FieldArrows() {
             const dz = nextZ - c.position[2];
             const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             
-            // Si la línea se acerca a una carga destino, la ajustamos para que aterrice exactamente en el borde (radio 0.25)
-            if (dist <= 0.3) {
+            // Radio de la carga es ~0.25. Detectamos impacto un poco antes para mayor fiabilidad.
+            if (dist <= 0.35) {
               hit = true;
+              if (c.type === 'positive') hitPositive = true;
+              
               if (dist > 0) {
                 const ratio = 0.25 / dist;
                 const finalX = c.position[0] + dx * ratio;
@@ -202,7 +230,15 @@ export const FieldArrows = memo(function FieldArrows() {
             }
           }
           
-          if (hit) break;
+          if (hit) {
+            // Si trazamos hacia atrás desde una negativa y chocamos con una positiva, 
+            // descartamos esta línea porque la carga positiva ya dibujará una idéntica hacia adelante.
+            if (!isPos && hitPositive) {
+              discardLine = true;
+            }
+            break;
+          }
+          
           if (Math.abs(nextX) > 30 || Math.abs(nextY) > 30 || Math.abs(nextZ) > 30) break;
           
           currentX = nextX;
@@ -210,31 +246,33 @@ export const FieldArrows = memo(function FieldArrows() {
           currentZ = nextZ;
         }
 
-        linePositions.push(...tempPositions);
-        lineColors.push(...tempColors);
+        if (!discardLine) {
+          linePositions.push(...tempPositions);
+          lineColors.push(...tempColors);
 
-        for (let arrIdx = 0; arrIdx < tempArrows.length; arrIdx++) {
-          const arr = tempArrows[arrIdx];
-          if (arrowIndex < arrowsMesh.count) {
-            dummy.position.set(arr.pos[0], arr.pos[1], arr.pos[2]);
-            // Para las flechas, siempre apuntan en la dirección del campo (independientemente del trazado inverso)
-            tempVec3.set(arr.dir[0], arr.dir[1], arr.dir[2]);
-            dummy.quaternion.setFromUnitVectors(baseUp, tempVec3);
-            dummy.scale.setScalar(0.7);
-            dummy.updateMatrix();
-            arrowsMesh.setMatrixAt(arrowIndex, dummy.matrix);
+          for (let arrIdx = 0; arrIdx < tempArrows.length; arrIdx++) {
+            const arr = tempArrows[arrIdx];
+            if (arrowIndex < arrowsMesh.count) {
+              dummy.position.set(arr.pos[0], arr.pos[1], arr.pos[2]);
+              // Para las flechas, siempre apuntan en la dirección del campo (dir1), incluso trazando hacia atrás
+              tempVec3.set(arr.dir[0], arr.dir[1], arr.dir[2]);
+              dummy.quaternion.setFromUnitVectors(baseUp, tempVec3);
+              dummy.scale.setScalar(0.7);
+              dummy.updateMatrix();
+              arrowsMesh.setMatrixAt(arrowIndex, dummy.matrix);
 
-            const V_norm = Math.tanh(arr.V / 8.0);
-            const s = (V_norm + 1) / 2;
-            
-            tempArrowColorGrad.lerpColors(negativeColor, positiveColor, s);
-            
-            const { magnitude: arrowE } = calculateElectricField(arr.pos, chargesData);
-            const E_norm = Math.tanh(arrowE / 6.0);
-            tempArrowColorFinal.lerpColors(neutralColor, tempArrowColorGrad, E_norm);
-            
-            arrowsMesh.setColorAt(arrowIndex, tempArrowColorFinal);
-            arrowIndex++;
+              const V_norm = Math.tanh(arr.V / 8.0);
+              const s = (V_norm + 1) / 2;
+              
+              tempArrowColorGrad.lerpColors(negativeColor, positiveColor, s);
+              
+              const { magnitude: arrowE } = calculateElectricField(arr.pos, chargesData);
+              const E_norm = Math.tanh(arrowE / 6.0);
+              tempArrowColorFinal.lerpColors(neutralColor, tempArrowColorGrad, E_norm);
+              
+              arrowsMesh.setColorAt(arrowIndex, tempArrowColorFinal);
+              arrowIndex++;
+            }
           }
         }
       }

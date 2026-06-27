@@ -6,7 +6,7 @@ export function ZoomControls() {
   const setZoom = useSimulatorStore((state) => state.setZoom);
 
   return (
-    <div className="pointer-events-auto glass-panel-floating p-1.5 flex flex-row items-center justify-center gap-1 select-none">
+    <div className="pointer-events-auto glass-panel-floating p-1.5 flex flex-col sm:flex-row items-center justify-center gap-1 select-none">
       <button
         onClick={() => setZoom(Math.max(25, zoom - 25))}
         className="w-8 h-8 rounded-[calc(var(--radius)-4px)] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200 active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"

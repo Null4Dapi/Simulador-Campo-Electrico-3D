@@ -6,6 +6,18 @@ const WINDOW_MS = 60_000;
 
 function isRateLimitAllowed(ip: string): boolean {
   const now = Date.now();
+  
+  if (requestCounts.size > 1000) {
+    for (const [key, value] of requestCounts.entries()) {
+      if (now > value.resetTime) {
+        requestCounts.delete(key);
+      }
+    }
+    if (requestCounts.size > 1500) {
+      requestCounts.clear();
+    }
+  }
+
   const record = requestCounts.get(ip);
 
   if (!record || now > record.resetTime) {

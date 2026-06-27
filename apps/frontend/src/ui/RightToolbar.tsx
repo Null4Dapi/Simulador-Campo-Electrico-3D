@@ -28,9 +28,8 @@ export const RightToolbar = memo(function RightToolbar() {
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className="glass-panel-floating pointer-events-auto flex flex-row items-center gap-1 p-1.5 z-20"
+      className="glass-panel-floating pointer-events-auto flex flex-row items-center gap-1 p-1.5 z-20 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
     >
-      {/* Hand / Pan Mode */}
       <button
         onClick={() => setInteractionMode('pan')}
         className={`relative w-8 h-8 rounded-[calc(var(--radius)-4px)] flex items-center justify-center transition-colors duration-200 cursor-pointer active:scale-95 border outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -44,7 +43,6 @@ export const RightToolbar = memo(function RightToolbar() {
         <Hand className="w-4 h-4" />
       </button>
 
-      {/* Cursor / Select Mode */}
       <button
         onClick={() => setInteractionMode('select')}
         className={`relative w-8 h-8 rounded-[calc(var(--radius)-4px)] flex items-center justify-center transition-colors duration-200 cursor-pointer active:scale-95 border outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -60,7 +58,6 @@ export const RightToolbar = memo(function RightToolbar() {
 
       <div className="w-px h-5 bg-border mx-1" />
 
-      {/* Añadir Cargas */}
       <button
         onClick={() => {
           setInteractionMode('select');
@@ -108,7 +105,6 @@ export const RightToolbar = memo(function RightToolbar() {
 
       <div className="w-px h-5 bg-border mx-1" />
 
-      {/* Visualización */}
       <button
         onClick={toggleFieldLines}
         className={`relative w-8 h-8 rounded-[calc(var(--radius)-4px)] flex items-center justify-center transition-colors duration-200 cursor-pointer active:scale-95 border outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -142,27 +138,26 @@ export const RightToolbar = memo(function RightToolbar() {
 
       <div className="w-px h-5 bg-border mx-1" />
 
-      {/* Vistas Dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 h-8 hover:bg-black/5 dark:hover:bg-white/5 rounded-[calc(var(--radius)-4px)] text-xs font-medium text-foreground transition-all duration-200 active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <DropdownMenuTrigger aria-label="Cambiar vista de cámara" className="flex items-center gap-1.5 px-3 h-8 hover:bg-black/5 dark:hover:bg-white/5 rounded-[calc(var(--radius)-4px)] text-xs font-medium text-foreground transition-all duration-200 active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <span>Vistas</span>
           <ChevronDown className="w-3 h-3 opacity-50" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32 mt-2">
           <DropdownMenuItem onClick={() => setCameraView('top')} className="cursor-pointer justify-between">
-            Top
+            Superior
             {cameraView === 'top' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setCameraView('front')} className="cursor-pointer justify-between">
-            Front
+            Frontal
             {cameraView === 'front' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setCameraView('right')} className="cursor-pointer justify-between">
-            Right
+            Derecha
             {cameraView === 'right' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setCameraView('isometric')} className="cursor-pointer justify-between">
-            Iso
+            Isométrica
             {cameraView === 'isometric' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
           </DropdownMenuItem>
         </DropdownMenuContent>

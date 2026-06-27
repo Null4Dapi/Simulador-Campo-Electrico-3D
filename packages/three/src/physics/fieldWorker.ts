@@ -95,59 +95,47 @@ workerScope.onmessage = (e: MessageEvent<WorkerInput>) => {
   }
 
   const maxAbsQ = Math.max(...charges.map((c) => Math.abs(c.value * 1e-9)));
-  const maxV_estimated = (ke * maxAbsQ) / 1.2;
+  
+  // Rango de distancias visuales para las superficies (desde muy cerca de la carga hasta lejos)
+  const r_min = 0.25;
+  const r_max = 5.0;
+  
+  const V_max = (ke * maxAbsQ) / r_min;
+  const V_min = (ke * maxAbsQ) / r_max;
 
-  const numLayers = 6;
-
-  // Solo generamos isovalores dentro del rango físico real [gridVMin, gridVMax].
-  // Esto elimina las isosuperficies fantasmas que aparecen cuando el campo es
-  // exclusivamente positivo (cargas del mismo signo) y se piden aislamientos negativos.
+  const numLayers = 8;
   const rawIsolations: number[] = [];
-  const deltaV = maxV_estimated / numLayers;
-  for (let i = 1; i <= numLayers; i++) {
-    const posIso = i * deltaV;
-    const negIso = -i * deltaV;
-    if (posIso >= gridVMin && posIso <= gridVMax) rawIsolations.push(posIso);
-    if (negIso >= gridVMin && negIso <= gridVMax) rawIsolations.push(negIso);
+  
+  // Progresión geométrica (logarítmica) para que las superficies se distribuyan
+  // de forma natural, concentrándose más cerca de las cargas donde el gradiente es alto.
+  const ratio = Math.pow(V_max / V_min, 1 / (numLayers - 1));
+  
+  for (let i = 0; i < numLayers; i++) {
+    const iso = V_min * Math.pow(ratio, i);
+    if (iso >= gridVMin && iso <= gridVMax) rawIsolations.push(iso);
+    if (-iso >= gridVMin && -iso <= gridVMax) rawIsolations.push(-iso);
   }
-
-  // Umbral de triángulos: descartamos cualquier capa cuyo tamaño supere el 30 % del
-  // máximo histórico (protección adicional contra artefactos de la caja de cómputo).
-  const MAX_TRIANGLE_FRACTION = 0.30;
-  let maxCountSeen = 0;
 
   const allPositions: number[] = [];
   const allNormals: number[] = [];
   const allColors: number[] = [];
 
-  // Primera pasada: medir conteos para calcular el umbral real
-  const layerCounts: number[] = [];
-  for (const iso of rawIsolations) {
-    marchingCubes.isolation = iso;
-    marchingCubes.update();
-    layerCounts.push(marchingCubes.count);
-    if (marchingCubes.count > maxCountSeen) maxCountSeen = marchingCubes.count;
-  }
-
-  const triangleThreshold = maxCountSeen * MAX_TRIANGLE_FRACTION;
-
-  // Segunda pasada: construir geometría solo para capas válidas
+  // Construir geometría para las capas válidas
   for (let li = 0; li < rawIsolations.length; li++) {
     const iso = rawIsolations[li];
-    const count = layerCounts[li];
-
-    // Omitimos capas vacías o capas anómalamente grandes (artefactos de borde)
-    if (count === 0) continue;
-    if (count > triangleThreshold && rawIsolations.length > 1) continue;
-
+    
     marchingCubes.isolation = iso;
     marchingCubes.update();
+    
+    const count = marchingCubes.count;
+    if (count === 0) continue;
 
     const posArray = marchingCubes.geometry.attributes.position.array;
     const normArray = marchingCubes.geometry.attributes.normal.array;
 
     const absIso = Math.abs(iso);
-    const intensity = 0.3 + 0.7 * (absIso / maxV_estimated);
+    // Normalizar intensidad del color basado en el rango visual
+    const intensity = 0.3 + 0.7 * Math.min(1, absIso / V_max);
 
     const r = iso > 0 ? 0.9 * intensity : 0.15;
     const g = 0.15;

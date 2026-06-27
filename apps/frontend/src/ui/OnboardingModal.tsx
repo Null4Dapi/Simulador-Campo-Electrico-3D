@@ -24,7 +24,6 @@ export function OnboardingModal() {
   const completeOnboarding = useSimulatorStore((state) => state.completeOnboarding);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  // Omite la renderización si el usuario ya ha completado la introducción
   if (hasSeenOnboarding) return null;
 
   const nextSlide = () => {
@@ -41,12 +40,9 @@ export function OnboardingModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Capa de fondo oscurecida para focalizar la atención */}
       <div className="absolute inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-md animate-in fade-in duration-500" />
       
-      {/* Contenedor principal de la ventana modal */}
       <div className="relative w-full max-w-lg bg-slate-50 dark:bg-zinc-900 border border-black/10 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-500">
-        {/* Encabezado informativo */}
         <div className="px-8 pt-8 pb-4 text-center">
           <h2 className="text-2xl font-serif font-bold text-zinc-900 dark:text-white tracking-wide">
             Campo Eléctrico 3D
@@ -59,9 +55,7 @@ export function OnboardingModal() {
           </p>
         </div>
 
-        {/* Área interactiva del carrusel de imágenes */}
         <div className="relative w-full px-2 py-4 flex flex-col items-center justify-center">
-          {/* Elementos de control de navegación direccional */}
           <button 
             onClick={prevSlide}
             className="absolute left-4 top-[100px] w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors z-10"
@@ -78,7 +72,6 @@ export function OnboardingModal() {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
 
-          {/* Contenedor secuencial de diapositivas */}
           <div className="w-full overflow-hidden px-8 relative">
             <div className="w-full flex transition-transform duration-500 ease-out will-change-transform" style={{ transform: `translate3d(-${activeSlide * 100}%, 0, 0)` }}>
               {SLIDES.map((slide, index) => (
@@ -91,13 +84,11 @@ export function OnboardingModal() {
                 </div>
               ))}
             </div>
-            {/* Gradientes laterales para transición visual suave optimizada */}
             <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-slate-50 dark:from-zinc-900 to-transparent pointer-events-none" />
             <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-slate-50 dark:from-zinc-900 to-transparent pointer-events-none" />
           </div>
         </div>
 
-        {/* Pie de página con indicadores de progreso y botón de acción */}
         <div className="px-8 pb-8 pt-4 flex flex-col items-center gap-6">
           <div className="flex gap-2">
             {SLIDES.map((_, index) => (

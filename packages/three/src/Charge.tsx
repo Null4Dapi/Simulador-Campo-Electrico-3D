@@ -1,8 +1,8 @@
-import { useState, memo, useMemo } from 'react';
+import { useState, memo, useMemo, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import type { ThreeEvent } from '@react-three/fiber';
-import { useCursor, Html, Billboard, Text } from '@react-three/drei';
-import { Plane, Vector3 } from 'three';
+import { Html } from '@react-three/drei';
+import { Vector3, Group, Plane } from 'three';
+import { ThreeEvent } from '@react-three/fiber';
 import type { Charge as ChargeType } from '@campoelectrico/types';
 import { useSimulatorStore } from '@campoelectrico/store';
 import { calculateForceAndEnergy } from './physics/calculus';
@@ -10,12 +10,6 @@ import { calculateForceAndEnergy } from './physics/calculus';
 interface ChargeProps {
   charge: ChargeType;
 }
-
-const intersection = new Vector3();
-const xyPlane = new Plane();
-const xzPlane = new Plane();
-const planeNormalXY = new Vector3(0, 0, 1);
-const planeNormalXZ = new Vector3(0, 1, 0);
 
 export const Charge = memo(function Charge({ charge }: ChargeProps) {
   const updateCharge = useSimulatorStore((state) => state.updateCharge);
@@ -25,73 +19,22 @@ export const Charge = memo(function Charge({ charge }: ChargeProps) {
   const snapToGrid = useSimulatorStore((state) => state.snapToGrid);
   const allCharges = useSimulatorStore((state) => state.charges);
   const interactionMode = useSimulatorStore((state) => state.interactionMode);
+  const cameraView = useSimulatorStore((state) => state.cameraView);
   
   const [hovered, setHover] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const groupRef = useRef<Group>(null);
+  const dragPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), 0), []);
+  const dragOffset = useRef(new Vector3());
+  const intersectionPoint = useRef(new Vector3());
+  const lastUpdateTime = useRef(0);
   
-  useCursor(hovered || dragging, dragging ? 'grabbing' : 'grab', 'auto');
+  // Opcional: Cambiar cursor si se está sobre la carga
+  // useEffect(() => {
+  //   document.body.style.cursor = hovered ? 'pointer' : 'auto';
+  // }, [hovered]);
 
   const get = useThree((state) => state.get);
-
-  const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
-    if (interactionMode === 'pan') return;
-    e.stopPropagation();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    setDragging(true);
-    setIsDraggingGlobal(true);
-    selectCharge(charge.id); // Selecciona la carga actual durante el evento de clic
-    const controls = get().controls;
-    if (controls) {
-      (controls as unknown as { enabled: boolean }).enabled = false;
-    }
-  };
-
-  const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
-    if (interactionMode === 'pan') return;
-    e.stopPropagation();
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    setDragging(false);
-    setIsDraggingGlobal(false);
-    const controls = get().controls;
-    if (controls) {
-      (controls as unknown as { enabled: boolean }).enabled = true;
-    }
-  };
-
-  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (dragging) {
-      e.stopPropagation();
-      
-      let x = charge.position[0];
-      let y = charge.position[1];
-      let z = charge.position[2];
-
-      if (e.shiftKey) {
-        // Restringe el movimiento al plano XY manteniendo la coordenada Z constante
-        xyPlane.setFromNormalAndCoplanarPoint(planeNormalXY, new Vector3(0, 0, charge.position[2]));
-        const res = e.ray.intersectPlane(xyPlane, intersection);
-        if (res) {
-          x = intersection.x;
-          y = intersection.y;
-        }
-      } else {
-        // Restringe el movimiento al plano XZ manteniendo la coordenada Y constante
-        xzPlane.setFromNormalAndCoplanarPoint(planeNormalXZ, new Vector3(0, charge.position[1], 0));
-        const res = e.ray.intersectPlane(xzPlane, intersection);
-        if (res) {
-          x = intersection.x;
-          z = intersection.z;
-        }
-      }
-
-      if (snapToGrid) {
-        x = Math.round(x * 2) / 2; // Aplica alineación a incrementos de 0.5m
-        y = Math.round(y * 2) / 2;
-        z = Math.round(z * 2) / 2;
-      }
-      updateCharge(charge.id, { position: [x, y, z] });
-    }
-  };
 
   const isSelected = selectedChargeId === charge.id;
   const isTest = charge.type === 'test';
@@ -113,12 +56,10 @@ export const Charge = memo(function Charge({ charge }: ChargeProps) {
   
   let color = '#3b82f6';
   if (charge.type === 'positive') color = '#ef4444';
-  if (charge.type === 'test') color = '#22c55e'; // Aplica color específico para cargas de prueba
+  if (charge.type === 'test') color = '#22c55e';
   
-  // Calcula los datos físicos locales si el elemento es una carga de prueba
   let testData = null;
   if (isTest) {
-    // Calcula la fuerza considerando únicamente las fuentes de campo, omitiendo la propia carga de prueba
     testData = calculateForceAndEnergy(charge.position, charge.value, allCharges);
   }
 
@@ -126,33 +67,106 @@ export const Charge = memo(function Charge({ charge }: ChargeProps) {
   let forceLength = 0;
   if (isTest && testData && testData.fieldMagnitude > 0) {
     forceDir = new Vector3(...testData.force).normalize();
-    // Fuerza real en nN (magnitud): |q0| * E
     const forceMag_nN = Math.abs(charge.value) * testData.fieldMagnitude;
-    // Escala la longitud del vector basándose en el logaritmo de la fuerza real para mantener proporción y visibilidad
     forceLength = Math.max(0.6, Math.min(3.5, Math.log10(forceMag_nN + 1) * 0.6));
   }
 
+  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+    if (interactionMode === 'pan') return;
+    e.stopPropagation();
+    selectCharge(charge.id);
+    
+    if (isSelected) {
+      setDragging(true);
+      setIsDraggingGlobal(true);
+      
+      const controls = get().controls as any;
+      if (controls) controls.enabled = false;
+      
+      const target = e.target as HTMLElement;
+      if (target.setPointerCapture) target.setPointerCapture(e.pointerId);
+
+      const normal = new Vector3();
+      if (cameraView === 'top') normal.set(0, 1, 0);
+      else if (cameraView === 'front') normal.set(0, 0, 1);
+      else if (cameraView === 'right') normal.set(1, 0, 0);
+      else get().camera.getWorldDirection(normal).negate();
+      
+      dragPlane.setFromNormalAndCoplanarPoint(normal, groupRef.current!.position);
+      
+      if (e.ray.intersectPlane(dragPlane, intersectionPoint.current)) {
+        dragOffset.current.copy(groupRef.current!.position).sub(intersectionPoint.current);
+      }
+    }
+  };
+
+  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!dragging || !groupRef.current) return;
+    e.stopPropagation();
+
+    if (e.ray.intersectPlane(dragPlane, intersectionPoint.current)) {
+      let x = intersectionPoint.current.x + dragOffset.current.x;
+      let y = intersectionPoint.current.y + dragOffset.current.y;
+      let z = intersectionPoint.current.z + dragOffset.current.z;
+
+      if (snapToGrid) {
+        x = Math.round(x * 2) / 2;
+        y = Math.round(y * 2) / 2;
+        z = Math.round(z * 2) / 2;
+      }
+
+      groupRef.current.position.set(x, y, z);
+      
+      const now = performance.now();
+      if (now - lastUpdateTime.current > 75) { // ~13 FPS throttling for physics
+        lastUpdateTime.current = now;
+        updateCharge(charge.id, { position: [x, y, z] });
+      }
+    }
+  };
+
+  const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+    if (!dragging) return;
+    e.stopPropagation();
+    
+    setDragging(false);
+    setIsDraggingGlobal(false);
+    
+    const target = e.target as HTMLElement;
+    if (target.releasePointerCapture) target.releasePointerCapture(e.pointerId);
+    
+    const controls = get().controls as any;
+    if (controls) controls.enabled = true;
+    
+    if (groupRef.current) {
+       const { x, y, z } = groupRef.current.position;
+       updateCharge(charge.id, { position: [x, y, z] });
+    }
+  };
+
   return (
-    <group position={charge.position}>
-      {/* Representación gráfica del vector de fuerza para la carga de prueba */}
+    <group ref={groupRef} position={charge.position}>
       {isTest && testData && testData.fieldMagnitude > 0 && Math.abs(charge.value) > 0 && (
         <arrowHelper 
           args={[forceDir, new Vector3(0,0,0), forceLength, 0x22c55e, 0.3, 0.2]} 
         />
       )}
       
-      {/* Malla principal representativa de la carga */}
       <mesh
         onPointerOver={(e) => { 
           if (interactionMode !== 'pan') {
             e.stopPropagation(); 
             setHover(true); 
+            document.body.style.cursor = isSelected ? 'grab' : 'pointer';
           }
         }}
-        onPointerOut={() => setHover(false)}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerMove={onPointerMove}
+        onPointerOut={() => {
+          setHover(false);
+          document.body.style.cursor = 'auto';
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
       >
         <sphereGeometry args={[isTest ? 0.1 : 0.25, 32, 32]} />
         <meshStandardMaterial 
@@ -163,7 +177,6 @@ export const Charge = memo(function Charge({ charge }: ChargeProps) {
         />
       </mesh>
 
-      {/* Panel flotante HTML de lecturas físicas para la carga de prueba seleccionada */}
       {isTest && isSelected && testData && (
         <Html 
           position={[0, 0, 0]} 
@@ -171,7 +184,6 @@ export const Charge = memo(function Charge({ charge }: ChargeProps) {
           style={{ pointerEvents: 'none' }}
           className={`pointer-events-none select-none z-50 transition-opacity duration-200 ${showLabel ? 'opacity-100' : 'opacity-0'}`}
         >
-          {/* Usamos un offset en espacio de pantalla (CSS translate) para que NUNCA tape la carga, sin importar el ángulo de la cámara */}
           <div className="translate-x-[65px] -translate-y-[45px] glass-panel-floating text-foreground p-2.5 text-[11px] font-sans space-y-1.5 w-36 whitespace-nowrap">
             <div className="flex justify-between items-center gap-2">
               <span className="text-muted-foreground font-medium flex items-center gap-1">
@@ -191,11 +203,10 @@ export const Charge = memo(function Charge({ charge }: ChargeProps) {
         </Html>
       )}
 
-      {/* Indicador de coordenadas espaciales activo durante la manipulación */}
       {dragging && (
         <Html position={[0, 0.6, 0]} center className="pointer-events-none">
           <div className="glass-panel-floating text-foreground text-[11px] px-2 py-1 font-mono whitespace-nowrap z-50">
-            ({charge.position[0].toFixed(2)}, {charge.position[2].toFixed(2)})
+            ({groupRef.current?.position.x.toFixed(2) || charge.position[0].toFixed(2)}, {groupRef.current?.position.z.toFixed(2) || charge.position[2].toFixed(2)})
           </div>
         </Html>
       )}

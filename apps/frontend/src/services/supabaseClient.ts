@@ -9,7 +9,6 @@ export interface ChatMessage {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
-// Define la clave identificadora para la capa de almacenamiento persistente local
 const LOCAL_STORAGE_KEY = 'campo_electrico_chat_history';
 
 const getLocalMessages = (sessionId: string): ChatMessage[] => {
@@ -79,7 +78,7 @@ export const supabaseClient = {
 
   async getMessages(sessionId: string): Promise<ChatMessage[]> {
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_messages?session_id=eq.${sessionId}&order=created_at.asc`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_messages?session_id=eq.${encodeURIComponent(sessionId)}&order=created_at.asc`, {
         method: 'GET',
         headers: {
           'apikey': SUPABASE_KEY,

@@ -2,8 +2,11 @@
   "name": "@campoelectrico/backend",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
   "dependencies": {
-    "@vercel/node": "^5.8.12",
-    "@campoelectrico/types": "workspace:*"
+    "@campoelectrico/types": "workspace:*",
+    "@vercel/node": "^5.8.19"
   }
 }

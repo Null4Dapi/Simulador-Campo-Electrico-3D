@@ -16,5 +16,22 @@ export default defineConfig({
     port: 4173,
     strictPort: true,
     allowedHosts: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three/')) {
+            return 'three-core';
+          }
+          if (id.includes('node_modules/@react-three/')) {
+            return 'react-three';
+          }
+          if (id.includes('node_modules/lucide-react/') || id.includes('node_modules/framer-motion/') || id.includes('node_modules/katex/')) {
+            return 'ui-vendor';
+          }
+        }
+      }
+    }
   }
 })

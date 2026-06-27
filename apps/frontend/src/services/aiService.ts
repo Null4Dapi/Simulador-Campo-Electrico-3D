@@ -222,13 +222,6 @@ function executeLocalSimulatorCommand(text: string): string | null {
 export const aiService = {
   async getChatResponse(history: ChatMessage[]): Promise<string> {
     try {
-      // El entorno de ejecución abstrae la URL base y gestiona las credenciales de forma segura.
-
-      /**
-       * Intercepta el estado global de la simulación física (Zustand).
-       * Serializa la posición, el tipo y la magnitud de cada carga para inyectar este contexto directamente
-       * en el prompt del sistema, permitiendo al modelo inferir acciones espaciales con alta precisión.
-       */
       const store = useSimulatorStore.getState();
       const charges = store.charges;
       let simulatorContext = '\n\n# ESTADO ACTUAL DEL SIMULADOR\n';
@@ -275,13 +268,7 @@ export const aiService = {
         const msg = history[i];
         let content = msg.content;
         
-        /**
-         * Interceptador de flujo asíncrono para extracción de parámetros matemáticos.
-         * Detecta si el usuario acaba de confirmar la matriz de variables (q, r, x, E, etc.).
-         * Si es así, realiza una llamada (POST) al endpoint de física de Vercel (/api/calculate),
-         * obtiene el vector de resultados absolutos y lo inyecta como una etiqueta invisible (<physics_engine_result>).
-         * Esto previene alucinaciones matemáticas del modelo de lenguaje.
-         */
+        // Interceptar parámetros confirmados para inyectar la solución del motor de física
         if (i === history.length - 1 && msg.role === 'user' && content.includes('<parameter_confirmed>')) {
           const match = content.match(/<parameter_confirmed>([\s\S]*?)<\/parameter_confirmed>/);
           if (match) {
@@ -348,16 +335,8 @@ export const aiService = {
         throw new Error('La respuesta del asistente está vacía.');
       }
 
-      /**
-       * Procesa comandos de renderizado inyectados mediante etiquetas <actions>.
-       * Parsea las instrucciones JSON y las ejecuta de forma asíncrona sobre el estado de Zustand,
-       * modificando la malla (mesh) 3D sin recargar la aplicación.
-       */
       this.executeSimulatorActions(textResponse);
 
-      /**
-       * Retorna la respuesta final limpia, eliminando los metadatos estructurales y comandos JSON.
-       */
       return textResponse.replace(/<actions>[\s\S]*?<\/actions>/g, '').trim();
 
     } catch (error: unknown) {

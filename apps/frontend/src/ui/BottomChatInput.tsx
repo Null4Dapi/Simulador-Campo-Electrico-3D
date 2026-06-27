@@ -34,10 +34,8 @@ export const BottomChatInput = memo(function BottomChatInput() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Recupera el identificador de sesión a través del gestor de estado global
   const sessionId = useSimulatorStore((state) => state.sessionId);
 
-  // Redimensiona verticalmente el área de texto de forma dinámica según su contenido
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -45,7 +43,6 @@ export const BottomChatInput = memo(function BottomChatInput() {
     }
   }, [input]);
 
-  // Controla el cierre de elementos superpuestos al detectar clics externos
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -67,17 +64,13 @@ export const BottomChatInput = memo(function BottomChatInput() {
     setIsChatOpen(true);
 
     try {
-      // 1. Almacena el texto introducido por el usuario
       await supabaseClient.saveMessage('user', messageText.trim(), sessionId);
       window.dispatchEvent(new CustomEvent('chat-message-added'));
 
-      // 2. Recupera la secuencia de diálogo previa como contexto para la comunicación remota
       const history = await supabaseClient.getMessages(sessionId);
 
-      // 3. Ejecuta la consulta al servicio mediante una función remota
       const response = await aiService.getChatResponse(history);
 
-      // 4. Almacena el resultado generado por el asistente virtual
       await supabaseClient.saveMessage('assistant', response, sessionId);
       window.dispatchEvent(new CustomEvent('chat-message-added'));
 
@@ -86,7 +79,6 @@ export const BottomChatInput = memo(function BottomChatInput() {
       const errorMessage = err instanceof Error ? err.message : 'Error de conexión';
       setError(errorMessage);
       
-      // Genera un registro formal indicando el fallo de la operación requerida
       await supabaseClient.saveMessage(
         'assistant',
         `❌ **Error:** No se pudo completar tu petición. ${errorMessage}`,
@@ -112,7 +104,6 @@ export const BottomChatInput = memo(function BottomChatInput() {
     const value = e.target.value;
     setInput(value);
     
-    // Despliega el menú contextual de acciones directas ante el prefijo correspondiente
     if (value.startsWith('/')) {
       setShowCommands(true);
     } else {
@@ -126,18 +117,15 @@ export const BottomChatInput = memo(function BottomChatInput() {
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Controla el ciclo de animación textual en el texto de sugerencia
   useEffect(() => {
     const currentSuggestion = SUGGESTIONS[suggestionIndex];
-    const typingSpeed = isDeleting ? 30 : 60; // Define la tasa de actualización para la animación tipográfica
+    const typingSpeed = isDeleting ? 30 : 60;
     const currentLength = placeholderText.length;
     
     if (!isDeleting && currentLength === currentSuggestion.length) {
-      // Aplica un tiempo de espera prolongado al finalizar la escritura antes de iniciar el retroceso
       const pauseTimer = setTimeout(() => setIsDeleting(true), 18000); 
       return () => clearTimeout(pauseTimer);
     } else if (isDeleting && currentLength === 0) {
-      // Avanza al siguiente elemento del carrusel tras limpiar la cadena de texto
       setIsDeleting(false);
       setSuggestionIndex((prev) => (prev + 1) % SUGGESTIONS.length);
       return;
@@ -160,10 +148,9 @@ export const BottomChatInput = memo(function BottomChatInput() {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <div className="pointer-events-none flex flex-col items-center gap-3 self-center z-20 w-full max-w-xl px-4 sm:px-0">
+    <div className="pointer-events-none flex flex-col items-center gap-3 self-center z-20 w-full max-w-[280px] sm:max-w-xl px-4 sm:px-0">
       <div ref={containerRef} className="relative pointer-events-auto flex flex-col items-center w-full">
         
-        {/* Menú de comandos predeterminados */}
         <AnimatePresence>
         {showCommands && (
           <motion.div 
@@ -193,14 +180,12 @@ export const BottomChatInput = memo(function BottomChatInput() {
         )}
         </AnimatePresence>
 
-        {/* Campo de Entrada Principal */}
         <motion.div 
           initial={false}
           animate={{ width: isFocused || input ? '100%' : '280px' }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="glass-panel-floating flex flex-row items-end gap-2 p-1.5 px-2 mx-auto origin-center"
+          className="glass-panel-floating flex flex-row items-end gap-2 p-1.5 px-2 mx-auto origin-center max-w-full"
         >
-          {/* Caja de Texto */}
           <textarea
             ref={textareaRef}
             id="chat-textarea"
@@ -217,7 +202,6 @@ export const BottomChatInput = memo(function BottomChatInput() {
             disabled={isLoading}
           />
 
-          {/* Controles: Error y Botón de Enviar */}
           <div className="flex items-center gap-2 mb-0.5 relative z-10 shrink-0">
             {error && (
               <span className="text-[10px] text-red-400 max-w-[120px] truncate" title={error}>
