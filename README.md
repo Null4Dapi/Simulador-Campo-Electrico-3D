@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./apps/frontend/public/favicon.svg" alt="Campo Eléctrico 3D Logo" width="120" height="120" />
+  <img src="./apps/frontend/public/512X512.webp" alt="Campo Eléctrico 3D Logo" width="120" height="120" />
 
 # Campo Eléctrico 3D
 
